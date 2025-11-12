@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AUTISM MULTIMODAL AI</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 40px; color: #333; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
+    .section { background: white; padding: 25px; border-radius: 12px; border: 2px solid #ddd; margin-bottom: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .section h2, .section h3 { margin-top: 0; color: #2980b9; }
+    input, select, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    button { background: #8e44ad; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 18px; margin-top: 30px; }
+    button:hover { background: #6c3483; }
+    .q-item { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 12px; border-radius: 6px; border: 1px solid #eee; margin: 6px 0; }
+    .q-item label { flex: 1; font-weight: 500; }
+    .q-item select { width: 100px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+    .result { background: #f9fff9; padding: 20px; border: 2px solid #4CAF50; border-radius: 12px; margin-top: 20px; }
+    .risk-bar-container { background: #eee; height: 28px; border-radius: 14px; overflow: hidden; position: relative; margin: 15px 0; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+    .risk-bar-fill { height: 100%; transition: width 0.6s ease; width: 0; }
+    .risk-bar-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; font-size: 13px; text-shadow: 0 0 3px black; }
+    .result-img { max-width: 100%; border-radius: 8px; margin: 10px 0; border: 1px solid #ddd; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #f8f9fa; font-weight: 600; }
+    .high-risk { color: #d9534f; } .medium-risk { color: #f0ad4e; } .low-risk { color: #28a745; } .bold { font-weight: bold; }
+    .fusion { background: #f3e5f5; border: 2px solid #8e44ad; }
+    .impact-pos { color: #d9534f; } .impact-neg { color: #28a745; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AUTISM MULTIMODAL AI</h1>
+
+    <!-- FORM -->
+    <div class="section">
+      <h2>Upload Photo + Fill Q-CHAT</h2>
+      <form method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*" required />
+
+        <h3>Q-CHAT-10 (All Required)</h3>
+        {% set q = [
+          "Look when name called?",
+          "Easy eye contact?",
+          "Point to show interest?",
+          "Pretend or make-believe play?",
+          "Follow where you look?",
+          "Interest in other children?",
+          "Smile in response?",
+          "Understand simple instructions?",
+          "Respond socially (e.g., laugh back)?",
+          "Stare aimlessly or at nothing?"
+        ] %}
+
+        {% for i in range(10) %}
+        <div class="q-item">
+          <label>A{{ i+1 }}: {{ q[i] }}</label>
+          <select name="a{{ i+1 }}" required>
+            <option value="" disabled selected>Select</option>
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+          </select>
+        </div>
+        {% endfor %}
+
+        <div class="grid">
+          <div>Age: <input name="age" value="5" type="number" min="0" required /></div>
+          <div>Speech Delay: <select name="speech_delay" required><option>No</option><option>Yes</option></select></div>
+          <div>Genetic: <select name="genetic_disorders" required><option>No</option><option>Yes</option></select></div>
+          <div>Depression: <select name="depression" required><option>No</option><option>Yes</option></select></div>
+          <div>Global Delay: <select name="global_delay" required><option>No</option><option>Yes</option></select></div>
+          <div>Social: <select name="social_issues" required><option>No</option><option>Yes</option></select></div>
+          <div>Anxiety: <select name="anxiety" required><option>No</option><option>Yes</option></select></div>
+          <div>Sex: <select name="sex" required><option>M</option><option>F</option></select></div>
+          <div>Jaundice: <select name="jaundice" required><option>No</option><option>Yes</option></select></div>
+          <div>Family ASD: <select name="family_asd" required><option>No</option><option>Yes</option></select></div>
+        </div>
+
+        <button type="submit">ANALYZE BOTH</button>
+      </form>
+    </div>
+
+    <!-- RESULTS -->
+    {% if image_result or text_result %}
+    <div class="section" id="results">
+      <h2>RESULTS</h2>
+
+      <!-- IMAGE -->
+      {% if image_result %}
+      <div class="result">
+        <h3>Image Prediction: <span class="bold">{{ image_result.label }}</span> ({{ image_result.confidence }})</h3>
+        <img src="{{ image_result.original_b64 }}" class="result-img" style="max-width:300px;" alt="Original" />
+        
+        <h4>AI Focus (LIME - Autism Regions)</h4>
+        <img src="{{ image_result.heatmap_b64 }}" class="result-img" alt="LIME Heatmap" />
+
+        <div class="risk-bar-container">
+          <div class="risk-bar-fill" id="img-fill"></div>
+          <span class="risk-bar-label">{{ image_result.confidence }}</span>
+        </div>
+        <script>
+          setTimeout(() => {
+            const f = document.getElementById('img-fill');
+            f.style.width = '{{ (image_result.conf_raw * 100) | round(0) }}%';
+            f.style.background = '{{ "#d9534f" if image_result.label == "Autistic" else "#28a745" }}';
+          }, 100);
+        </script>
+      </div>
+      {% endif %}
+
+      <!-- TEXT + SHAP + FULL TABLE -->
+      {% if text_result %}
+      <div class="result" id="text-result">
+        <h3>Risk: <strong class="{% if text_result.risk == 'High Risk' %}high-risk{% elif text_result.risk == 'Medium Risk' %}medium-risk{% else %}low-risk{% endif %} bold">
+          {{ text_result.risk }}
+        </strong> ({{ text_result.probability }})</h3>
+        <p><strong>Q-CHAT Score:</strong> {{ text_result.qchat_score }}/10</p>
+
+        <div class="risk-bar-container">
+          <div class="risk-bar-fill"></div>
+          <span class="risk-bar-label">{{ text_result.probability }}</span>
+        </div>
+        <script>
+          setTimeout(() => {
+            const f = document.querySelector('#text-result .risk-bar-fill');
+            f.style.width = '{{ (text_result.prob_raw * 100) | round(0) }}%';
+            f.style.background = '{{ text_result.risk_color }}';
+          }, 100);
+        </script>
+
+        <h4>SHAP Explanation</h4>
+        <img src="{{ text_result.shap_plot }}" class="result-img" alt="SHAP" />
+
+        <h4>Feature Importance (All Features)</h4>
+        <table>
+          <tr><th>Feature</th><th>Value</th><th>Impact</th></tr>
+          {% for f in text_result.features %}
+          <tr>
+            <td>{{ f.name }}</td>
+            <td>{{ f.value }}</td>
+            <td class="impact-{{ 'pos' if f.impact > 0 else 'neg' }} bold">{{ f.impact_str }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const results = document.getElementById('results');
+        if (results) results.scrollIntoView({ behavior: 'smooth' });
+      });
+    </script>
+    {% endif %}
+  </div>
+</body>
+</html>
+
